@@ -184,6 +184,13 @@ mvn test
 
 Alle Alerts zeigen "Normal" (grün) bei fehlenden Daten (`noDataState: OK`).
 
-### Offene Aufgaben
+### Lessons Learned
 
-Keine — alle 4 DevOps-Schritte sind abgeschlossen.
+Dieses Projekt dient als Einstieg in DevOps und deckt den vollständigen Lebenszyklus einer Anwendung ab:
+
+- **Containerisierung**: Eine Java-Anwendung mit Docker verpacken, mehrere Services in einem Netzwerk betreiben und Container-Kommunikation verstehen.
+- **Monitoring**: Prometheus als Datensammler und Grafana als Visualisierung einsetzen, PromQL-Abfragen schreiben und Dashboards per Provisioning automatisch laden.
+- **Alerting**: Schwellenwerte definieren, Alert-Regeln konfigurieren und das Verhalten bei fehlenden Daten steuern.
+- **CI/CD**: Eine Pipeline mit GitHub Actions einrichten, die bei jedem Push automatisch Tests ausführt und Artefakte baut.
+- **Tests**: Unit- und Integration-Tests schreiben, um Controller-Endpunkte und Actuator-Metriken zu prüfen.
+- **Git & GitHub**: Repository verwalten, `.gitignore` konfigurieren und die Versionshistorie pflegen.
