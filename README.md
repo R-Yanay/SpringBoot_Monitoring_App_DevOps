@@ -4,7 +4,7 @@ Spring Boot-Anwendung mit Prometheus und Grafana zum Überwachen von CPU, Speich
 
 ## Architektur
 
-Die App läuft lokal auf Port 8080. Prometheus (in Docker) fragt alle 15 Sekunden `/actuator/prometheus` ab und speichert die Daten. Grafana (in Docker) liest von Prometheus und zeigt ein Dashboard auf Port 3000.
+Alle drei Komponenten — Spring Boot App, Prometheus und Grafana — laufen in Docker-Containern im selben Netzwerk. Prometheus fragt alle 15 Sekunden `/actuator/prometheus` der App ab und speichert die Metriken. Grafana liest von Prometheus und visualisiert die Daten auf Port 3000.
 
 ```
 +---------------------+     +---------------------+
@@ -85,6 +85,12 @@ Das Dashboard `monitoring.json` enthält Panels für CPU Usage, JVM Memory (Heap
 
 ## Schnellstart
 
+### Voraussetzungen
+
+- Java 17 installiert
+- Docker Desktop läuft
+- Git installiert
+
 ### Projekt klonen
 
 ```bash
@@ -92,31 +98,51 @@ git clone https://github.com/R-Yanay/SpringBoot_Monitoring_App_DevOps.git
 cd SpringBoot_Monitoring_App_DevOps
 ```
 
-### App starten
+### Umgebungsvariablen einrichten
 
-In IntelliJ: `MonitoringApplication.java` öffnen und ausführen.
-
-Oder im Terminal:
+Kopiere die Beispiel-Umgebungsdatei und passe sie bei Bedarf an:
 
 ```bash
-mvn spring-boot:run
+cp .env.example .env
 ```
 
-App läuft auf `http://localhost:8080`.
+### Alle Services starten
 
-### Monitoring starten
+Ein Befehl startet App, Prometheus und Grafana:
 
-Docker Desktop muss laufen.
-
-```powershell
-docker compose up -d prometheus grafana
+```bash
+docker compose up -d
 ```
+
+Dabei wird das Docker-Image der App gebaut (erster Start dauert ca. 1–2 Minuten).
 
 ### Dashboard öffnen
 
 1. `http://localhost:3000` im Browser öffnen
 2. Login: **admin** / **admin**
 3. Links: **Dashboards** → **Browse** → **Spring Boot Monitoring**
+
+### Services stoppen
+
+```bash
+docker compose down
+```
+
+### Alternative: Nur die App lokal entwickeln
+
+Für lokale Entwicklung ohne Docker-Container der App:
+
+```bash
+mvn spring-boot:run
+```
+
+Dann nur Prometheus und Grafana in Docker starten:
+
+```bash
+docker compose up -d prometheus grafana
+```
+
+In diesem Fall muss `prometheus/prometheus.yml` auf `host.docker.internal:8080` zeigen.
 
 ## Tests
 
@@ -128,19 +154,11 @@ docker compose up -d prometheus grafana
 | `DemoControllerTest` | 4 | Alle 4 Demo-Endpunkte |
 | `ActuatorEndpointTest` | 3 | `/health`, `/metrics`, `/prometheus` |
 
-### Mit Maven
+Tests ausführen:
 
 ```bash
 mvn test
 ```
-
-Ergebnis: 8/8 Tests bestanden, `BUILD SUCCESS`.
-
-### In IntelliJ
-
-Rechte Maustaste auf `src/test/java/com/monitoring/` → **Run 'All Tests'**.
-
-Falls die grünen Ausführen-Pfeile fehlen: `pom.xml` öffnen und **Reload All Maven Projects** klicken.
 
 ## DevOps-Status
 
@@ -165,16 +183,6 @@ Falls die grünen Ausführen-Pfeile fehlen: `pom.xml` öffnen und **Reload All M
 | App Down Critical | App nicht erreichbar | 1 Minute |
 
 Alle Alerts zeigen "Normal" (grün) bei fehlenden Daten (`noDataState: OK`).
-
-### Vollständiges Docker-Deploy
-
-Alle 3 Services (App + Prometheus + Grafana) in einem Docker-Netzwerk:
-
-```powershell
-docker compose up -d
-```
-
-Startet alle 3 Container gleichzeitig. Die App läuft im Container auf Port 8080, Prometheus auf 9090, Grafana auf 3000.
 
 ### Offene Aufgaben
 

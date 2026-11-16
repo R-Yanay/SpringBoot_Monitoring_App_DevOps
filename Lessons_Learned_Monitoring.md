@@ -21,16 +21,16 @@ Prometheus speichert die Daten, Grafana visualisiert sie. Beide benötigen einan
 ## Datenfluss
 
 ```
-Spring Boot App (localhost:8080)
+Spring Boot App (Port 8080)
         |
         |  /actuator/prometheus liefert Metriken
         v
 +---------------------+
 |     Prometheus      |
-|   (localhost:9090)  |
+|   (Port 9090)       |
 |                     |
 |  - Scraping alle 15s|
-|  - Zeitreihenspeiche|
+|  - Zeitreihenspeicher|
 |  - PromQL-Abfragen   |
 +----------+----------+
            |
@@ -38,7 +38,7 @@ Spring Boot App (localhost:8080)
            v
 +---------------------+
 |      Grafana         |
-|   (localhost:3000)   |
+|   (Port 3000)        |
 |                      |
 |  - Dashboards        |
 |  - Alert-Status      |
@@ -47,75 +47,77 @@ Spring Boot App (localhost:8080)
            |
            |  Browser-Zugriff
            v
-      Dein Browser
+       Browser
 ```
 
-1. Spring Boot App läuft lokal auf Port 8080 und stellt `/actuator/prometheus` bereit
+1. Spring Boot App stellt `/actuator/prometheus` bereit
 2. Prometheus fragt alle 15 Sekunden die Metriken ab und speichert sie
 3. Grafana liest auf Anfrage Daten von Prometheus und rendert das Dashboard
-4. Du greifst über `http://localhost:3000` auf Grafana zu
+4. Zugriff über `http://localhost:3000` im Browser
 
-IntelliJ startet nur die Java-App. Prometheus und Grafana laufen unabhängig in Docker-Containern.
+## Zwei Betriebsmodi
+
+### Vollständiges Docker-Deploy (Empfohlen)
+
+Alle drei Services — App, Prometheus und Grafana — laufen in Docker-Containern im selben Netzwerk. Prometheus erreicht die App über den Container-Namen `app:8080`.
+
+```bash
+docker compose up -d
+```
+
+### App lokal entwickeln
+
+Die App läuft lokal (z. B. über die IDE), nur Prometheus und Grafana in Docker. In diesem Fall muss `prometheus/prometheus.yml` auf `host.docker.internal:8080` zeigen — die spezielle Adresse, über die ein Container auf den Host-Computer zugreift.
+
+```bash
+docker compose up -d prometheus grafana
+```
 
 ## Wichtige Erkenntnisse
 
-### 1. `host.docker.internal` statt `app:8080`
+### 1. Container-Kommunikation
 
-Prometheus sucht die App standardmäßig unter `app:8080` (Container-Name). Da die App lokal läuft, muss in `prometheus.yml` der Target auf `host.docker.internal:8080` gesetzt werden. Das ist die interne Adresse, über die ein Container auf den Host-Computer zugreift.
+Im Docker-Netzwerk erreichen sich Container über ihre Namen (`app:8080`, `prometheus:9090`). Vom Host aus ist nur `localhost:PORT` erreichbar. Beim Wechsel zwischen den Betriebsmodi muss `prometheus.yml` entsprechend angepasst werden.
 
 ### 2. Docker Desktop muss laufen
 
-Ohne Docker Desktop starten Prometheus und Grafana nicht. Der Status im Taskleistensymbol muss "Docker Desktop Running" sein.
+Ohne Docker Desktop starten Prometheus und Grafana nicht. Der Status muss "Running" sein.
 
 ### 3. HTTP-Metriken brauchen Zeit
 
 CPU und JVM Memory erscheinen sofort (Gauge-Werte). HTTP Request Rate und Response Time verwenden `rate()[5m]` und brauchen 5–10 Minuten an Traffic, bevor sie Daten anzeigen.
 
-### 4. IntelliJ hat keine Verbindung zu Docker
+### 4. Volume-Mounts statt `docker cp`
 
-IntelliJ startet nur die Java-App. Prometheus und Grafana laufen separat in Docker.
+Die `docker-compose.yml` bindet Konfigurationsordner als Volumes ein. Änderungen an `monitoring.json` oder `rules.yml` werden nach einem `docker compose restart` automatisch übernommen — kein manuelles Kopieren in den Container nötig.
 
 ## Container aktualisieren nach Änderungen
 
-Container haben beim Start eine Kopie der Dateien. Änderungen im Projektordner werden nicht automatisch übernommen.
+### Dashboard oder Alert-Regeln geändert
 
-### `monitoring.json` geändert
-
-Das Volume `./grafana/dashboards:/var/lib/grafana/dashboards` in der `docker-compose.yml` bindet den Ordner direkt ein. Ein Neustart reicht:
-
-```powershell
+```bash
 docker compose restart grafana
 ```
 
-### `prometheus.yml` oder `docker-compose.yml` geändert
+### Prometheus-Konfiguration geändert
 
-Container neu erstellen:
+```bash
+docker compose restart prometheus
+```
 
-```powershell
+### Docker-Compose oder Dockerfile geändert
+
+```bash
 docker compose down
-docker compose up -d
+docker compose up -d --build
 ```
 
 ### Nur Java-Code geändert
 
-App in IntelliJ stoppen und neu starten. Kein Docker-Befehl nötig.
+Bei vollem Docker-Deploy: `docker compose up -d --build` neu bauen.
+Bei lokaler Entwicklung: App in der IDE neu starten.
 
-## Befehle
-
-### Container starten
-
-```powershell
-cd C:\Users\roiya\IdeaProjects\ProjectIdeas\SpringBoot_Monitoring_APP_DevOps
-docker compose up -d prometheus grafana
-```
-
-### Container stoppen
-
-```powershell
-docker compose down
-```
-
-## URLs
+## Nützliche URLs
 
 | Service | URL | Login |
 |---------|-----|-------|
@@ -127,6 +129,5 @@ docker compose down
 ## Schnellstart
 
 1. Docker Desktop starten
-2. `docker compose up -d prometheus grafana` ausführen
-3. Spring Boot App in IntelliJ starten
-4. http://localhost:3000 öffnen, Dashboard auswählen
+2. `docker compose up -d` im Projektordner ausführen
+3. `http://localhost:3000` öffnen, Dashboard auswählen
