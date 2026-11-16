@@ -47,4 +47,13 @@ class DemoControllerTest {
                 () -> mockMvc.perform(get("/api/demo/error"))
         );
     }
+
+    @Test
+    void heavyLoad_ShouldReturnResult() throws Exception {
+        mockMvc.perform(get("/api/demo/heavy"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").value("Schwere Berechnung abgeschlossen"))
+                .andExpect(jsonPath("$.cpuResult").exists())
+                .andExpect(jsonPath("$.memoryAllocatedMB").value("50"));
+    }
 }

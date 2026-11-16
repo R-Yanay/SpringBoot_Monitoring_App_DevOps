@@ -12,7 +12,6 @@ import java.util.concurrent.atomic.AtomicLong;
 @Configuration
 public class MetricsConfig {
 
-    private final AtomicLong customCounter = new AtomicLong(0);
     private final MeterRegistry registry;
 
     // Separate Counter für jede URL
@@ -22,12 +21,13 @@ public class MetricsConfig {
     private final AtomicLong errorCounter = new AtomicLong(0);
     private final AtomicLong heavyCounter = new AtomicLong(0);
 
-    // Prometheus Counter-Referenzen (einmalig registriert, wiederverwendet)
+    // Prometheus-Referenzen (einmalig registriert, wiederverwendet)
     private Counter helloCounterProm;
     private Counter slowCounterProm;
     private Counter workCounterProm;
     private Counter errorCounterProm;
     private Counter heavyCounterProm;
+    private Timer slowTimer;
 
     public MetricsConfig(MeterRegistry registry) {
         this.registry = registry;
@@ -35,21 +35,6 @@ public class MetricsConfig {
 
     @PostConstruct
     public void initCustomMetrics() {
-        // Counter: Zählt die Anzahl der benutzerdefinierten Ereignisse
-        Counter.builder("app.custom.events")
-                .description("Benutzerdefinierte Ereignisse in der Anwendung")
-                .register(registry);
-
-        // Gauge: Misst den aktuellen Wert eines Zählers
-        Gauge.builder("app.custom.gauge", customCounter, AtomicLong::get)
-                .description("Benutzerdefinierter Gauge-Wert")
-                .register(registry);
-
-        // Timer: Misst die Dauer von Operationen
-        Timer.builder("app.custom.timer")
-                .description("Benutzerdefinierter Timer für Operationen")
-                .register(registry);
-
         // Separate Counter für jede URL (einmalig registrieren und speichern)
         helloCounterProm = Counter.builder("app.hello.calls")
                 .description("Anzahl der Aufrufe von /api/demo/hello")
@@ -69,6 +54,11 @@ public class MetricsConfig {
 
         heavyCounterProm = Counter.builder("app.heavy.calls")
                 .description("Anzahl der Aufrufe von /api/demo/heavy")
+                .register(registry);
+
+        // Timer für /slow Endpunkt
+        slowTimer = Timer.builder("app.slow.duration")
+                .description("Dauer der /slow Endpunkt-Antwort")
                 .register(registry);
 
         // Separate Gauges für jede URL
@@ -91,14 +81,6 @@ public class MetricsConfig {
         Gauge.builder("app.heavy.count", heavyCounter, AtomicLong::get)
                 .description("Zähler für /heavy Aufrufe")
                 .register(registry);
-    }
-
-    public void incrementCustomCounter() {
-        customCounter.incrementAndGet();
-    }
-
-    public long getCustomCounter() {
-        return customCounter.get();
     }
 
     // Separate Counter-Methoden für jede URL (nutzt gespeicherte Referenzen)
@@ -132,6 +114,10 @@ public class MetricsConfig {
     public long getWorkCounter() { return workCounter.get(); }
     public long getErrorCounter() { return errorCounter.get(); }
     public long getHeavyCounter() { return heavyCounter.get(); }
+
+    public Timer getSlowTimer() {
+        return slowTimer;
+    }
 
     public MeterRegistry getRegistry() {
         return registry;

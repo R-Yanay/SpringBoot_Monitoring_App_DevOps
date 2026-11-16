@@ -1,7 +1,6 @@
 package com.monitoring.controller;
 
 import com.monitoring.config.MetricsConfig;
-import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.Timer;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -34,16 +33,14 @@ public class DemoController {
     @GetMapping("/slow")
     public Map<String, String> slowEndpoint() throws InterruptedException {
         metricsConfig.incrementSlowCounter();
-        Timer.builder("app.custom.timer")
-                .description("Benutzerdefinierter Timer für Operationen")
-                .register(metricsConfig.getRegistry())
-                .record(() -> {
-                    try {
-                        Thread.sleep(1000);
-                    } catch (InterruptedException e) {
-                        Thread.currentThread().interrupt();
-                    }
-                });
+        Timer timer = metricsConfig.getSlowTimer();
+        timer.record(() -> {
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        });
         return Map.of("message", "Dieser Endpunkt ist absichtlich langsam");
     }
 

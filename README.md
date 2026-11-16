@@ -119,8 +119,7 @@ Jeder Endpunkt hat einen eigenen Counter in `MetricsConfig.java`:
 | `app.work.count` | `/api/demo/work` |
 | `app.error.count` | `/api/demo/error` |
 | `app.heavy.count` | `/api/demo/heavy` |
-
-Zusätzlich: `app.custom.events` (Counter), `app.custom.gauge` (Gauge), `app.custom.timer` (Timer).
+| `app.slow.duration` | `/api/demo/slow` (Timer) |
 
 ## Grafana Dashboard
 
@@ -189,12 +188,12 @@ In diesem Fall muss `prometheus/prometheus.yml` auf `host.docker.internal:8080` 
 
 ## Tests
 
-8 Tests in 3 Klassen:
+9 Tests in 3 Klassen:
 
 | Test-Klasse | Anzahl | Inhalt |
 |-------------|--------|--------|
 | `MonitoringApplicationTests` | 1 | App startet ohne Fehler |
-| `DemoControllerTest` | 4 | Alle 4 Demo-Endpunkte |
+| `DemoControllerTest` | 5 | Alle 5 Demo-Endpunkte |
 | `ActuatorEndpointTest` | 3 | `/health`, `/metrics`, `/prometheus` |
 
 Tests ausführen:
