@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spring Boot Monitoring App</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            color: white;
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .subtitle {
+            color: rgba(255,255,255,0.9);
+            text-align: center;
+            margin-bottom: 40px;
+            font-size: 1.2em;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .card h2 {
+            color: #333;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        .endpoint {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            margin: 8px 0;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+
+        .method {
+            font-weight: bold;
+            padding: 4px 10px;
+            border-radius: 4px;
+            margin-right: 15px;
+            min-width: 60px;
+            text-align: center;
+            font-size: 0.9em;
+        }
+
+        .method.get {
+            background: #28a745;
+            color: white;
+        }
+
+        .method.post {
+            background: #007bff;
+            color: white;
+        }
+
+        .url {
+            font-family: 'Courier New', monospace;
+            color: #495057;
+            flex: 1;
+        }
+
+        .description {
+            color: #6c757d;
+            font-size: 0.9em;
+            margin-top: 5px;
+        }
+
+        .links {
+            text-align: center;
+            margin-top: 30px;
+        }
+
+        .links a {
+            display: inline-block;
+            margin: 10px;
+            padding: 12px 25px;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            border: 2px solid white;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+
+        .links a:hover {
+            background: white;
+            color: #667eea;
+        }
+
+        .status {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 0.9em;
+        }
+
+        .status.healthy {
+            background: #28a745;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📊 Spring Boot Monitoring App</h1>
+        <p class="subtitle">DevOps Monitoring Demo mit Prometheus und Grafana</p>
+
+        <div class="card">
+            <h2>🖥️ Anwendung Status</h2>
+            <div style="text-align: center; padding: 20px;">
+                <span class="status healthy">● RUNNING</span>
+                <p style="margin-top: 15px; color: #6c757d;">Die Anwendung läuft auf Port 8080</p>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>🔧 Actuator Endpunkte</h2>
+            
+            <div class="endpoint">
+                <span class="method get">GET</span>
+                <div>
+                    <div class="url">/actuator/health</div>
+                    <div class="description">Gesundheitsstatus der Anwendung</div>
+                </div>
+            </div>
+
+            <div class="endpoint">
+                <span class="method get">GET</span>
+                <div>
+                    <div class="url">/actuator/info</div>
+                    <div class="description">Anwendungsinformationen</div>
+                </div>
+            </div>
+
+            <div class="endpoint">
+                <span class="method get">GET</span>
+                <div>
+                    <div class="url">/actuator/metrics</div>
+                    <div class="description">Alle verfügbaren Metriken</div>
+                </div>
+            </div>
+
+            <div class="endpoint">
+                <span class="method get">GET</span>
+                <div>
+                    <div class="url">/actuator/prometheus</div>
+                    <div class="description">Metriken im Prometheus-Format (für Scraping)</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>🎮 Demo Endpunkte</h2>
+            
+            <div class="endpoint">
+                <span class="method get">GET</span>
+                <div>
+                    <div class="url">/api/demo/hello</div>
+                    <div class="description">Einfacher Begrüßungs-Endpunkt</div>
+                </div>
+            </div>
+
+            <div class="endpoint">
+                <span class="method get">GET</span>
+                <div>
+                    <div class="url">/api/demo/slow</div>
+                    <div class="description">Simuliert eine langsame Operation (2 Sekunden)</div>
+                </div>
+            </div>
+
+            <div class="endpoint">
+                <span class="method get">GET</span>
+                <div>
+                    <div class="url">/api/demo/work</div>
+                    <div class="description">Simuliert rechenintensive Arbeit</div>
+                </div>
+            </div>
+
+            <div class="endpoint">
+                <span class="method get">GET</span>
+                <div>
+                    <div class="url">/api/demo/error</div>
+                    <div class="description">Simuliert einen Fehler (für Tests)</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>📈 Monitoring Tools</h2>
+            <p style="color: #6c757d; margin-bottom: 15px;">
+                Nach dem Start mit <code>docker-compose up</code> sind folgende Tools verfügbar:
+            </p>
+            
+            <div class="endpoint">
+                <span class="method get">GET</span>
+                <div>
+                    <div class="url">http://localhost:9090</div>
+                    <div class="description">Prometheus UI - Metriken-Abfrage und -Speicherung</div>
+                </div>
+            </div>
+
+            <div class="endpoint">
+                <span class="method get">GET</span>
+                <div>
+                    <div class="url">http://localhost:3000</div>
+                    <div class="description">Grafana Dashboard - Visualisierung der Metriken (Login: admin/admin)</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="links">
+            <a href="/actuator/health" target="_blank">Health Check</a>
+            <a href="/actuator/prometheus" target="_blank">Prometheus Metrics</a>
+            <a href="/api/demo/hello" target="_blank">Demo Hello</a>
+        </div>
+    </div>
+</body>
+</html>
