@@ -208,7 +208,7 @@ mvn test
 |-------|--------|
 | CODE | Fertig |
 | BUILD | Fertig (GitHub Actions CI/CD) |
-| TEST | Fertig (8 Tests) |
+| TEST | Fertig (12 Tests) |
 | DEPLOY | Fertig (alle 3 Services in Docker) |
 | OPERATE | Fertig (4 Alert-Regeln) |
 | MONITOR | Fertig (Prometheus + Grafana) |
