@@ -149,7 +149,7 @@ Falls die grünen Ausführen-Pfeile fehlen: `pom.xml` öffnen und **Reload All M
 | CODE | Fertig |
 | BUILD | Fertig (GitHub Actions CI/CD) |
 | TEST | Fertig (8 Tests) |
-| DEPLOY | Teilweise (Docker Compose manuell) |
+| DEPLOY | Fertig (alle 3 Services in Docker) |
 | OPERATE | Fertig (4 Alert-Regeln) |
 | MONITOR | Fertig (Prometheus + Grafana) |
 
@@ -166,6 +166,16 @@ Falls die grünen Ausführen-Pfeile fehlen: `pom.xml` öffnen und **Reload All M
 
 Alle Alerts zeigen "Normal" (grün) bei fehlenden Daten (`noDataState: OK`).
 
+### Vollständiges Docker-Deploy
+
+Alle 3 Services (App + Prometheus + Grafana) in einem Docker-Netzwerk:
+
+```powershell
+docker compose up -d
+```
+
+Startet alle 3 Container gleichzeitig. Die App läuft im Container auf Port 8080, Prometheus auf 9090, Grafana auf 3000.
+
 ### Offene Aufgaben
 
-- [ ] Vollständiges Docker-Deploy testen (alle 3 Services: App + Prometheus + Grafana) (Schritt 4)
+Keine — alle 4 DevOps-Schritte sind abgeschlossen.
