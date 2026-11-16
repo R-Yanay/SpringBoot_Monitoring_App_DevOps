@@ -188,12 +188,12 @@ In diesem Fall muss `prometheus/prometheus.yml` auf `host.docker.internal:8080` 
 
 ## Tests
 
-9 Tests in 3 Klassen:
+12 Tests in 3 Klassen:
 
 | Test-Klasse | Anzahl | Inhalt |
 |-------------|--------|--------|
 | `MonitoringApplicationTests` | 1 | App startet ohne Fehler |
-| `DemoControllerTest` | 5 | Alle 5 Demo-Endpunkte |
+| `DemoControllerTest` | 8 | Alle 5 Endpunkte + Counter, Zeit, 404-Test |
 | `ActuatorEndpointTest` | 3 | `/health`, `/metrics`, `/prometheus` |
 
 Tests ausführen:
