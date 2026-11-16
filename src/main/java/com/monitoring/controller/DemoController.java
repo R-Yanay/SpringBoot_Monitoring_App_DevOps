@@ -48,7 +48,7 @@ public class DemoController {
         return Map.of("message", "Dieser Endpunkt ist absichtlich langsam");
     }
 
-    @PostMapping("/work")
+    @GetMapping("/work")
     public Map<String, String> doWork() {
         metricsConfig.incrementWorkCounter();
         long result = 0;
@@ -62,5 +62,24 @@ public class DemoController {
     public Map<String, String> errorEndpoint() {
         metricsConfig.incrementErrorCounter();
         throw new RuntimeException("Absichtlicher Fehler für Metriken-Tests");
+    }
+
+    @GetMapping("/heavy")
+    public Map<String, String> heavyLoad() throws InterruptedException {
+        metricsConfig.incrementHeavyCounter();
+        // CPU-Last: 10 Millionen Berechnungen
+        long cpuResult = 0;
+        for (int i = 0; i < 10000000; i++) {
+            cpuResult += Math.sqrt(i) * Math.sin(i);
+        }
+
+        // Memory-Last: 50 MB allozieren und halten
+        byte[] memoryLoad = new byte[50 * 1024 * 1024];
+
+        return Map.of(
+                "message", "Schwere Berechnung abgeschlossen",
+                "cpuResult", String.valueOf(cpuResult),
+                "memoryAllocatedMB", "50"
+        );
     }
 }

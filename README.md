@@ -61,8 +61,9 @@ SpringBoot_Monitoring_APP_DevOps/
 |----------|---------|-------------|
 | `/api/demo/hello` | GET | Begrüßung und Visit-Count |
 | `/api/demo/slow` | GET | Simuliert langsame Antwort (~1 Sekunde) |
-| `/api/demo/work` | POST | Simuliert rechenintensive Arbeit |
-| `/api/demo/error` | GET | Wirft RuntimeException |
+| `/api/demo/work` | GET | Simuliert rechenintensive Arbeit |
+| `/api/demo/error` | GET | Wirft RuntimeException (HTTP 500) |
+| `/api/demo/heavy` | GET | Erzeugt CPU- und Memory-Last (10 Mio. Berechnungen, 50 MB) |
 
 ## Custom Metrics
 
@@ -74,12 +75,13 @@ Jeder Endpunkt hat einen eigenen Counter in `MetricsConfig.java`:
 | `app.slow.count` | `/api/demo/slow` |
 | `app.work.count` | `/api/demo/work` |
 | `app.error.count` | `/api/demo/error` |
+| `app.heavy.count` | `/api/demo/heavy` |
 
 Zusätzlich: `app.custom.events` (Counter), `app.custom.gauge` (Gauge), `app.custom.timer` (Timer).
 
 ## Grafana Dashboard
 
-Das Dashboard `monitoring.json` enthält 8 Panels: CPU Usage, JVM Memory (Heap/Non-Heap), HTTP Request Rate, HTTP Response Time, Active Threads, GC Pause Time und Custom Metrics.
+Das Dashboard `monitoring.json` enthält Panels für CPU Usage, JVM Memory (Heap/Non-Heap), HTTP Request Rate, HTTP Response Time, Active Threads, GC Pause Time, sowie 5 individuelle Counter-Grafiken (/hello, /slow, /work, /error, /heavy).
 
 ## Schnellstart
 
@@ -148,10 +150,22 @@ Falls die grünen Ausführen-Pfeile fehlen: `pom.xml` öffnen und **Reload All M
 | BUILD | Fertig (GitHub Actions CI/CD) |
 | TEST | Fertig (8 Tests) |
 | DEPLOY | Teilweise (Docker Compose manuell) |
-| OPERATE | Teilweise (Alerting fehlt) |
+| OPERATE | Fertig (4 Alert-Regeln) |
 | MONITOR | Fertig (Prometheus + Grafana) |
+
+### Alerting
+
+4 Alert-Regeln in `grafana/provisioning/alerting/rules.yml`:
+
+| Alert | Bedingung | Dauer |
+|-------|-----------|-------|
+| CPU Warning | `system_cpu_usage > 0.8` | 5 Minuten |
+| Memory Warning | JVM Heap > 85% | 5 Minuten |
+| Error Rate Critical | > 5% HTTP 5xx-Antworten | 2 Minuten |
+| App Down Critical | App nicht erreichbar | 1 Minute |
+
+Alle Alerts zeigen "Normal" (grün) bei fehlenden Daten (`noDataState: OK`).
 
 ### Offene Aufgaben
 
-- [ ] Grafana Alerting konfigurieren (Schritt 3)
-- [ ] Vollständiges Docker-Deploy testen (alle 3 Services) (Schritt 4)
+- [ ] Vollständiges Docker-Deploy testen (alle 3 Services: App + Prometheus + Grafana) (Schritt 4)

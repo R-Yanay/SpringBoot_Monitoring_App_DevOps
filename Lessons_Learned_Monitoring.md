@@ -1,38 +1,61 @@
 # Lessons Learned: Monitoring mit Docker, Prometheus und Grafana
 
-## Die drei Komponenten
+## Architektur: Prometheus und Grafana
 
-| Komponente | Aufgabe |
-|------------|---------|
-| **Docker Desktop** | Bietet die Laufumgebung für Prometheus und Grafana als Container |
-| **Prometheus** | Fragt alle 15 Sekunden die App ab und speichert die Metriken |
-| **Grafana** | Liest die Daten von Prometheus und visualisiert sie als Dashboard |
+Das Monitoring besteht aus zwei Komponenten mit klar getrennten Aufgaben:
+
+**Prometheus** — Datensammlung und -speicherung
+- Fragt in festem Intervall (15 Sekunden) den `/actuator/prometheus` Endpoint der App ab
+- Speichert alle Metriken als Zeitreihen in einer eigenen Datenbank
+- Bietet PromQL als Abfragesprache für Metriken-Analyse
+- Prüft Alert-Regeln und meldet Statusänderungen
+
+**Grafana** — Visualisierung und Alerting-Oberfläche
+- Verbindet sich mit Prometheus als Datenquelle
+- Zeigt Metriken als Dashboards mit Grafiken, Diagrammen und Zählern
+- Verwaltet Alert-Regeln und zeigt den aktuellen Status (Normal/Firing)
+- Bietet interaktive Filter, Zeitraum-Auswahl und Vergleichsfunktionen
+
+Prometheus speichert die Daten, Grafana visualisiert sie. Beide benötigen einander: Prometheus ohne Grafana bietet nur eine Textkonsole, Grafana ohne Prometheus hat keine Datenquelle.
 
 ## Datenfluss
 
 ```
-+---------------------+     +---------------------+
-|  Spring Boot App    |     |  Docker Desktop     |
-|  Port 8080          |     |                     |
-|                     |     | +-----------+       |
-| /actuator/prometheus|---->| Prometheus  |       |
-|                     |     | Port 9090   |       |
-+---------------------+     |     |       |       |
-                            |     v       |       |
-                            | +-----------+       |
-                            | |  Grafana    |     |
-                            | | Port 3000   |     |
-                            | +-------------+     |
-                            +---------------------+
+Spring Boot App (localhost:8080)
+        |
+        |  /actuator/prometheus liefert Metriken
+        v
++---------------------+
+|     Prometheus      |
+|   (localhost:9090)  |
+|                     |
+|  - Scraping alle 15s|
+|  - Zeitreihenspeiche|
+|  - PromQL-Abfragen   |
++----------+----------+
+           |
+           |  Speichert Daten für Grafana
+           v
++---------------------+
+|      Grafana         |
+|   (localhost:3000)   |
+|                      |
+|  - Dashboards        |
+|  - Alert-Status      |
+|  - Interaktive UI    |
++----------+-----------+
+           |
+           |  Browser-Zugriff
+           v
+      Dein Browser
 ```
 
-1. Spring Boot App läuft lokal auf Port 8080
-2. Prometheus (in Docker) fragt `http://host.docker.internal:8080/actuator/prometheus` alle 15 Sekunden ab
-3. Die App antwortet mit CPU, Speicher, HTTP-Anfragen und Custom Metrics
-4. Prometheus speichert die Werte
-5. Grafana (in Docker) liest von Prometheus und zeigt das Dashboard auf Port 3000
+1. Spring Boot App läuft lokal auf Port 8080 und stellt `/actuator/prometheus` bereit
+2. Prometheus fragt alle 15 Sekunden die Metriken ab und speichert sie
+3. Grafana liest auf Anfrage Daten von Prometheus und rendert das Dashboard
+4. Du greifst über `http://localhost:3000` auf Grafana zu
 
-IntelliJ startet nur die App. Docker, Prometheus und Grafana laufen unabhängig davon.
+IntelliJ startet nur die Java-App. Prometheus und Grafana laufen unabhängig in Docker-Containern.
 
 ## Wichtige Erkenntnisse
 

@@ -1,40 +1,95 @@
 apiVersion: 1
 
 groups:
-  - name: Spring Boot Alerts
+  - orgId: 1
+    name: Spring Boot Alerts
+    folder: Spring Boot
+    interval: 1m
     rules:
-      - alert: CPU Warning
-        expr: system_cpu_usage > 0.8
+      - uid: cpu-warning
+        title: CPU Warning
+        condition: A
+        data:
+          - refId: A
+            datasourceUid: PBFA97CFB590B2093
+            relativeTimeRange:
+              from: 300
+              to: 0
+            model:
+              expr: system_cpu_usage > 0.8
+              instant: true
+              refId: A
+        noDataState: OK
+        execErrState: Alerting
         for: 5m
+        annotations:
+          summary: CPU-Auslastung ist hoch
+          description: CPU Usage ist seit 5 Minuten ueber 80%
         labels:
           severity: warning
-        annotations:
-          summary: "CPU-Auslastung ist hoch"
-          description: "CPU Usage ist seit 5 Minuten über 80% (aktuell: {{ $value | humanizePercentage }})"
 
-      - alert: Memory Warning
-        expr: jvm_memory_used_bytes{area="heap"} / jvm_memory_max_bytes{area="heap"} > 0.85
+      - uid: memory-warning
+        title: Memory Warning
+        condition: A
+        data:
+          - refId: A
+            datasourceUid: PBFA97CFB590B2093
+            relativeTimeRange:
+              from: 300
+              to: 0
+            model:
+              expr: jvm_memory_used_bytes{area="heap"} / jvm_memory_max_bytes{area="heap"} > 0.85
+              instant: true
+              refId: A
+        noDataState: OK
+        execErrState: Alerting
         for: 5m
+        annotations:
+          summary: JVM Heap-Speicher ist fast voll
+          description: Heap-Speicher ist seit 5 Minuten ueber 85%
         labels:
           severity: warning
-        annotations:
-          summary: "JVM Heap-Speicher ist fast voll"
-          description: "Heap-Speicher ist seit 5 Minuten über 85% (aktuell: {{ $value | humanizePercentage }})"
 
-      - alert: Error Rate Critical
-        expr: rate(http_server_requests_seconds_count{status=~"5.."}[5m]) > 0.05
+      - uid: error-rate-critical
+        title: Error Rate Critical
+        condition: A
+        data:
+          - refId: A
+            datasourceUid: PBFA97CFB590B2093
+            relativeTimeRange:
+              from: 300
+              to: 0
+            model:
+              expr: rate(http_server_requests_seconds_count{status=~"5.."}[5m]) > 0.05
+              instant: true
+              refId: A
+        noDataState: OK
+        execErrState: Alerting
         for: 2m
+        annotations:
+          summary: Hohe Fehler-Rate bei HTTP-Anfragen
+          description: Mehr als 5% der Anfragen enden mit Fehler 500
         labels:
           severity: critical
-        annotations:
-          summary: "Hohe Fehler-Rate bei HTTP-Anfragen"
-          description: "Mehr als 5% der Anfragen enden mit Fehler 500 (aktuell: {{ $value }} Fehler/Sekunde)"
 
-      - alert: App Down Critical
-        expr: up{job="spring-boot-app"} == 0
+      - uid: app-down-critical
+        title: App Down Critical
+        condition: A
+        data:
+          - refId: A
+            datasourceUid: PBFA97CFB590B2093
+            relativeTimeRange:
+              from: 60
+              to: 0
+            model:
+              expr: up{job="spring-boot-app"} == 0
+              instant: true
+              refId: A
+        noDataState: OK
+        execErrState: Alerting
         for: 1m
+        annotations:
+          summary: Spring Boot App ist nicht erreichbar
+          description: Die App ist seit 1 Minute nicht mehr antwortbereit
         labels:
           severity: critical
-        annotations:
-          summary: "Spring Boot App ist nicht erreichbar"
-          description: "Die App ist seit 1 Minute nicht mehr antwortbereit"

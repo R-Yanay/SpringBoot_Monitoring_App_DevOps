@@ -20,6 +20,7 @@ public class MetricsConfig {
     private final AtomicLong slowCounter = new AtomicLong(0);
     private final AtomicLong workCounter = new AtomicLong(0);
     private final AtomicLong errorCounter = new AtomicLong(0);
+    private final AtomicLong heavyCounter = new AtomicLong(0);
 
     public MetricsConfig(MeterRegistry registry) {
         this.registry = registry;
@@ -59,6 +60,10 @@ public class MetricsConfig {
                 .description("Anzahl der Aufrufe von /api/demo/error")
                 .register(registry);
 
+        Counter.builder("app.heavy.calls")
+                .description("Anzahl der Aufrufe von /api/demo/heavy")
+                .register(registry);
+
         // Separate Gauges für jede URL
         Gauge.builder("app.hello.count", helloCounter, AtomicLong::get)
                 .description("Zähler für /hello Aufrufe")
@@ -74,6 +79,10 @@ public class MetricsConfig {
 
         Gauge.builder("app.error.count", errorCounter, AtomicLong::get)
                 .description("Zähler für /error Aufrufe")
+                .register(registry);
+
+        Gauge.builder("app.heavy.count", heavyCounter, AtomicLong::get)
+                .description("Zähler für /heavy Aufrufe")
                 .register(registry);
     }
 
@@ -118,10 +127,19 @@ public class MetricsConfig {
                 .increment();
     }
 
+    public void incrementHeavyCounter() {
+        heavyCounter.incrementAndGet();
+        Counter.builder("app.heavy.calls")
+                .description("Anzahl der Aufrufe von /api/demo/heavy")
+                .register(registry)
+                .increment();
+    }
+
     public long getHelloCounter() { return helloCounter.get(); }
     public long getSlowCounter() { return slowCounter.get(); }
     public long getWorkCounter() { return workCounter.get(); }
     public long getErrorCounter() { return errorCounter.get(); }
+    public long getHeavyCounter() { return heavyCounter.get(); }
 
     public MeterRegistry getRegistry() {
         return registry;
