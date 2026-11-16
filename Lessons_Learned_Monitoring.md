@@ -1,137 +1,93 @@
-# Lessons Learned: Spring Boot Monitoring mit Docker, Prometheus & Grafana
+# Lessons Learned: Monitoring mit Docker, Prometheus und Grafana
 
-## Die drei Programme auf einen Blick
+## Die drei Komponenten
 
-| Programm | Rolle | Analogie |
-|----------|-------|----------|
-| **Docker Desktop** | Bietet isolierte Container-Boxen für Prometheus und Grafana | Die Garage, in der die Werkzeuge stehen |
-| **Prometheus** | Fragt alle 15 Sekunden die App ab und speichert die Daten | Der Mechaniker, der misst |
-| **Grafana** | Liest die Daten von Prometheus und zeigt sie als Grafiken | Das Armaturenbrett im Auto |
+| Komponente | Aufgabe |
+|------------|---------|
+| **Docker Desktop** | Bietet die Laufumgebung für Prometheus und Grafana als Container |
+| **Prometheus** | Fragt alle 15 Sekunden die App ab und speichert die Metriken |
+| **Grafana** | Liest die Daten von Prometheus und visualisiert sie als Dashboard |
 
----
+## Datenfluss
 
-## So funktioniert der Datenfluss
+1. Spring Boot App läuft lokal auf Port 8080
+2. Prometheus (in Docker) fragt `http://host.docker.internal:8080/actuator/prometheus` alle 15 Sekunden ab
+3. Die App antwortet mit CPU, Speicher, HTTP-Anfragen und Custom Metrics
+4. Prometheus speichert die Werte
+5. Grafana (in Docker) liest von Prometheus und zeigt das Dashboard auf Port 3000
 
-```
-┌────────────────────────────────────────────────────────────────┐
-│  DEIN COMPUTER                                                 │
-│                                                                │
-│  ┌──────────────┐   ┌──────────────────────────────────────┐  │
-│  │ IntelliJ IDEA│   │  Docker Desktop (Container-Box)      │  │
-│  │ (Code Editor) │   │                                      │  │
-│  │              │   │  ┌────────────┐  ┌────────────────┐  │  │
-│  │ - Schreibst  │   │  │ Prometheus │  │   Grafana      │  │  │
-│  │   Java-Code  │   │  │ (sammelt   │  │   (zeigt       │  │  │
-│  │ - Startest   │   │  │  die Daten)│  │   Grafiken)    │  │  │
-│  │   die App    │   │  └─────┬──────┘  └──────┬─────────┘  │  │
-│  └──────────────┘   └────────┼────────────────┼────────────┘  │
-│         │                    │                 │              │
-│         │ App läuft hier     │ Fragt ab        │ Liest von    │
-│         ▼ Port 8080          ▼                ▼              │
-│  ┌───────────────────────────────────────────────────────────┐│
-│  │  Deine Spring Boot App (läuft lokal auf dem Computer)     ││
-│  │  - Liefert Metriken an /actuator/prometheus               ││
-│  └───────────────────────────────────────────────────────────┘│
-└────────────────────────────────────────────────────────────────┘
-```
+IntelliJ startet nur die App. Docker, Prometheus und Grafana laufen unabhängig davon.
 
-### Schritt für Schritt
-
-1. **Du schreibst Code** in IntelliJ IDEA
-2. **IntelliJ startet** deine Spring Boot App → läuft auf `localhost:8080`
-3. **Prometheus** (in Docker) fragt alle 15 Sekunden `http://host.docker.internal:8080/actuator/prometheus` ab
-4. **Deine App antwortet** mit Zahlen (CPU, Speicher, HTTP-Anfragen, etc.)
-5. **Prometheus speichert** alle Zahlen in seiner Datenbank
-6. **Grafana** (in Docker) liest die Zahlen von Prometheus
-7. **Du siehst** im Browser unter `localhost:3000` die live Grafiken
-
----
-
-## Wichtige Lektionen
+## Wichtige Erkenntnisse
 
 ### 1. `host.docker.internal` statt `app:8080`
-- **Problem:** Prometheus suchte die App unter `app:8080` (Docker-Container-Name), aber die App läuft lokal.
-- **Lösung:** In `prometheus.yml`.targets auf `host.docker.internal:8080` ändern.
-- **Warum:** `host.docker.internal` ist die spezielle Adresse, über die ein Docker-Container auf den Host-Computer zugreifen kann.
+
+Prometheus sucht die App standardmäßig unter `app:8080` (Container-Name). Da die App lokal läuft, muss in `prometheus.yml` der Target auf `host.docker.internal:8080` gesetzt werden. Das ist die interne Adresse, über die ein Container auf den Host-Computer zugreift.
 
 ### 2. Docker Desktop muss laufen
-- Ohne Docker Desktop können Prometheus und Grafana nicht starten.
-- Status prüfen: Docker-Icon in der Taskleiste muss **"Docker Desktop Running"** anzeigen.
 
-### 3. Container starten
+Ohne Docker Desktop starten Prometheus und Grafana nicht. Der Status im Taskleistensymbol muss "Docker Desktop Running" sein.
+
+### 3. HTTP-Metriken brauchen Zeit
+
+CPU und JVM Memory erscheinen sofort (Gauge-Werte). HTTP Request Rate und Response Time verwenden `rate()[5m]` und brauchen 5–10 Minuten an Traffic, bevor sie Daten anzeigen.
+
+### 4. IntelliJ hat keine Verbindung zu Docker
+
+IntelliJ startet nur die Java-App. Prometheus und Grafana laufen separat in Docker.
+
+## Container aktualisieren nach Änderungen
+
+Container haben beim Start eine Kopie der Dateien. Änderungen im Projektordner werden nicht automatisch übernommen.
+
+### `monitoring.json` geändert
+
+Das Volume `./grafana/dashboards:/var/lib/grafana/dashboards` in der `docker-compose.yml` bindet den Ordner direkt ein. Ein Neustart reicht:
+
+```powershell
+docker compose restart grafana
+```
+
+### `prometheus.yml` oder `docker-compose.yml` geändert
+
+Container neu erstellen:
+
+```powershell
+docker compose down
+docker compose up -d
+```
+
+### Nur Java-Code geändert
+
+App in IntelliJ stoppen und neu starten. Kein Docker-Befehl nötig.
+
+## Befehle
+
+### Container starten
+
 ```powershell
 cd C:\Users\roiya\IdeaProjects\ProjectIdeas\SpringBoot_Monitoring_APP_DevOps
 docker compose up -d prometheus grafana
 ```
 
-### 4. HTTP-Metriken brauchen Zeit
-- **CPU, JVM Memory** → sofort sichtbar (Momentaufnahme/Gauge)
-- **HTTP Request Rate, Response Time** → brauchen 5–10 Minuten Traffic, weil `rate()[5m]` einen Durchschnitt berechnet
-
-### 5. IntelliJ hat keine Verbindung zu Docker/Prometheus/Grafana
-- IntelliJ startet nur die Java-App
-- Der Rest läuft komplett automatisch und unabhängig
-
----
-
-## Container aktualisieren nach Änderungen
-
-Ein Docker-Container hat beim Start eine **Kopie** deiner Dateien. Änderungen im Projektordner sieht der Container **nicht automatisch**.
-
-### Fall 1: Nur `monitoring.json` geändert (Dashboard-Grafiken)
-
-**Schritt 1:** Datei in den Container kopieren
-```powershell
-cd C:\Users\roiya\IdeaProjects\ProjectIdeas\SpringBoot_Monitoring_APP_DevOps
-docker cp grafana\dashboards\monitoring.json grafana:/var/lib/grafana/dashboards/monitoring.json
-```
-> **`docker cp`** = "copy" — kopiert eine Datei von deinem Computer in den laufenden Container.
-
-**Schritt 2:** Grafana neu starten
-```powershell
-docker compose restart grafana
-```
-> **`docker compose restart`** = startet den Container neu, damit er die geänderte Datei lädt.
-
-### Fall 2: `prometheus.yml` oder `docker-compose.yml` geändert
+### Container stoppen
 
 ```powershell
-cd C:\Users\roiya\IdeaProjects\ProjectIdeas\SpringBoot_Monitoring_APP_DevOps
 docker compose down
-docker compose up -d
 ```
-> **`docker compose down`** = stoppt und löscht alle Container.
-> **`docker compose up -d`** = startet **neue** Container mit der aktuellen Konfiguration.
 
-### Fall 3: Nur Java-Code geändert
-
-> **Kein Docker-Befehl nötig!** Die App in IntelliJ stoppen und neu starten.
-
-### Schnellübersicht
-
-| Was hast du geändert? | Befehl |
-|----------------------|--------|
-| `monitoring.json` (Dashboard) | `docker cp ...` → `docker compose restart grafana` |
-| `prometheus.yml` (Prometheus) | `docker compose down` → `docker compose up -d` |
-| `docker-compose.yml` | `docker compose down` → `docker compose up -d` |
-| Java-Code (.java-Dateien) | App in IntelliJ neu starten |
-
----
-
-## Nützliche URLs
+## URLs
 
 | Service | URL | Login |
 |---------|-----|-------|
-| **Grafana** | `http://localhost:3000` | admin / admin |
-| **Prometheus** | `http://localhost:9090` | kein Login |
-| **Spring Boot App** | `http://localhost:8080` | kein Login |
-| **Metriken-Endpoint** | `http://localhost:8080/actuator/prometheus` | Rohdaten |
+| Grafana | http://localhost:3000 | admin / admin |
+| Prometheus | http://localhost:9090 | kein Login |
+| Spring Boot App | http://localhost:8080 | kein Login |
+| Metriken | http://localhost:8080/actuator/prometheus | Rohdaten |
 
----
+## Schnellstart
 
-## Schnellstart-Zusammenfassung
-
-1. ✅ Docker Desktop starten
-2. ✅ `docker compose up -d prometheus grafana` ausführen
-3. ✅ Spring Boot App in IntelliJ starten
-4. ✅ Browser öffnen → `localhost:3000` → Dashboard genießen
+1. Docker Desktop starten
+2. `docker compose up -d prometheus grafana` ausführen
+3. Spring Boot App in IntelliJ starten
+4. http://localhost:3000 öffnen, Dashboard auswählen
