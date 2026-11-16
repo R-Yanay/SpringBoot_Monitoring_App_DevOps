@@ -28,6 +28,49 @@ Datenfluss:
 App (8080) → Prometheus (9090) → Grafana (3000)
 ```
 
+## Anfrage-Flow
+
+Wenn eine URL wie `http://localhost:8080/api/demo/hello` aufgerufen wird, durchläuft die Anfrage mehrere Schichten:
+
+```mermaid
+graph TD
+    A[Browser] -->|HTTP GET /api/demo/hello| B[Tomcat Embedded Server]
+    B -->|Anfrage weiterleiten| C[DispatcherServlet]
+    C -->|URL-Matching| D[DemoController]
+    D -->|Metrik erhöhen| E[MetricsConfig]
+    E -->|Counter hochzählen| D
+    D -->|JSON-Antwort| C
+    C -->|HTTP 200 + JSON| A
+```
+
+## Dependencies
+
+Die `pom.xml` definiert die benötigten Bibliotheken. Maven lädt automatisch alle transitiven Abhängigkeiten:
+
+```mermaid
+graph LR
+    pom[pom.xml] --> sw[spring-boot-starter-web]
+    pom --> sa[spring-boot-starter-actuator]
+    pom --> mp[micrometer-registry-prometheus]
+    pom --> st[spring-boot-starter-test]
+
+    sw --> tomcat[Tomcat]
+    sw --> mvc[Spring MVC]
+    sw --> jackson[Jackson JSON]
+
+    sa --> actuator[Actuator Endpoints]
+
+    mp --> counter[Counter / Gauge / Timer]
+
+    st --> junit[JUnit 5]
+    st --> mockmvc[MockMvc]
+    st --> assertj[AssertJ]
+
+    controller[DemoController.java] --> mvc
+    controller --> metrics[MetricsConfig.java]
+    metrics --> counter
+```
+
 ## Projektstruktur
 
 ```
