@@ -214,7 +214,7 @@ Erwartetes Ergebnis: **8/8 Tests bestanden** → `BUILD SUCCESS`
 | Phase | Status | Beschreibung |
 |-------|--------|-------------|
 | **CODE** | ✅ | Spring Boot App mit Java-Code in IntelliJ |
-| **BUILD** | ⚠️ | Maven kompiliert, Dockerfile vorhanden — CI/CD fehlt noch |
+| **BUILD** | ✅ | Maven kompiliert, GitHub Actions CI/CD Pipeline aktiv |
 | **TEST** | ✅ | 8 Tests in 3 Klassen, alle bestanden |
 | **DEPLOY** | ⚠️ | Docker Compose manuell — automatisches Deploy fehlt noch |
 | **OPERATE** | ⚠️ | Docker hält Container am Laufen — Alerting fehlt noch |
@@ -232,7 +232,7 @@ Erwartetes Ergebnis: **8/8 Tests bestanden** → `BUILD SUCCESS`
 
 ### Offene Aufgaben
 
-- [ ] GitHub Actions CI/CD Pipeline einrichten (Schritt 2)
+- [x] GitHub Actions CI/CD Pipeline einrichten (Schritt 2)
 - [ ] Grafana Alerting konfigurieren (Schritt 3)
 - [ ] Vollständiges Docker-Deploy testen (alle 3 Services) (Schritt 4)
 
