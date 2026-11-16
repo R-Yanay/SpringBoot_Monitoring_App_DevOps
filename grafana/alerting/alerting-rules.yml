@@ -1,0 +1,40 @@
+apiVersion: 1
+
+groups:
+  - name: Spring Boot Alerts
+    rules:
+      - alert: CPU Warning
+        expr: system_cpu_usage > 0.8
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "CPU-Auslastung ist hoch"
+          description: "CPU Usage ist seit 5 Minuten über 80% (aktuell: {{ $value | humanizePercentage }})"
+
+      - alert: Memory Warning
+        expr: jvm_memory_used_bytes{area="heap"} / jvm_memory_max_bytes{area="heap"} > 0.85
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "JVM Heap-Speicher ist fast voll"
+          description: "Heap-Speicher ist seit 5 Minuten über 85% (aktuell: {{ $value | humanizePercentage }})"
+
+      - alert: Error Rate Critical
+        expr: rate(http_server_requests_seconds_count{status=~"5.."}[5m]) > 0.05
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Hohe Fehler-Rate bei HTTP-Anfragen"
+          description: "Mehr als 5% der Anfragen enden mit Fehler 500 (aktuell: {{ $value }} Fehler/Sekunde)"
+
+      - alert: App Down Critical
+        expr: up{job="spring-boot-app"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Spring Boot App ist nicht erreichbar"
+          description: "Die App ist seit 1 Minute nicht mehr antwortbereit"

@@ -26,6 +26,7 @@ services:
     volumes:
       - ./grafana/provisioning:/etc/grafana/provisioning
       - ./grafana/dashboards:/var/lib/grafana/dashboards
+      - ./grafana/alerting:/etc/grafana/provisioning/alerting-rules
     networks:
       - monitoring
 
