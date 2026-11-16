@@ -7,7 +7,25 @@ Spring Boot-Anwendung mit Prometheus und Grafana zum Überwachen von CPU, Speich
 Die App läuft lokal auf Port 8080. Prometheus (in Docker) fragt alle 15 Sekunden `/actuator/prometheus` ab und speichert die Daten. Grafana (in Docker) liest von Prometheus und zeigt ein Dashboard auf Port 3000.
 
 ```
-Spring Boot App (8080) → Prometheus (9090) → Grafana (3000)
++---------------------+     +---------------------+
+|  Spring Boot App    |     |  Docker Desktop     |
+|  Port 8080          |     |                     |
+|                     |     | +-----------+       |
+| /actuator/prometheus|---->| Prometheus  |       |
+|                     |     | Port 9090   |       |
++---------------------+     |     |       |       |
+                            |     v       |       |
+                            | +-----------+       |
+                            | |  Grafana    |     |
+                            | | Port 3000   |     |
+                            | +-------------+     |
+                            +---------------------+
+```
+
+Datenfluss:
+
+```
+App (8080) → Prometheus (9090) → Grafana (3000)
 ```
 
 ## Projektstruktur

@@ -10,6 +10,22 @@
 
 ## Datenfluss
 
+```
++---------------------+     +---------------------+
+|  Spring Boot App    |     |  Docker Desktop     |
+|  Port 8080          |     |                     |
+|                     |     | +-----------+       |
+| /actuator/prometheus|---->| Prometheus  |       |
+|                     |     | Port 9090   |       |
++---------------------+     |     |       |       |
+                            |     v       |       |
+                            | +-----------+       |
+                            | |  Grafana    |     |
+                            | | Port 3000   |     |
+                            | +-------------+     |
+                            +---------------------+
+```
+
 1. Spring Boot App läuft lokal auf Port 8080
 2. Prometheus (in Docker) fragt `http://host.docker.internal:8080/actuator/prometheus` alle 15 Sekunden ab
 3. Die App antwortet mit CPU, Speicher, HTTP-Anfragen und Custom Metrics
