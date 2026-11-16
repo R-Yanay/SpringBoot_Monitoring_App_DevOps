@@ -4,7 +4,6 @@ import com.monitoring.config.MetricsConfig;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.Timer;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -73,8 +72,9 @@ public class DemoController {
             cpuResult += Math.sqrt(i) * Math.sin(i);
         }
 
-        // Memory-Last: 50 MB allozieren und halten
+        // Memory-Last: 50 MB allozieren, dann freigeben
         byte[] memoryLoad = new byte[50 * 1024 * 1024];
+        memoryLoad = null; // Ermöglicht Garbage Collection
 
         return Map.of(
                 "message", "Schwere Berechnung abgeschlossen",

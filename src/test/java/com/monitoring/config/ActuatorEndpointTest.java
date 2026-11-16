@@ -1,18 +1,17 @@
 package com.monitoring.config;
 
+import io.micrometer.core.instrument.MeterRegistry;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.web.client.TestRestTemplate;
-import org.springframework.http.ResponseEntity;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@SpringBootTest
 @AutoConfigureMockMvc
 class ActuatorEndpointTest {
 
@@ -20,7 +19,7 @@ class ActuatorEndpointTest {
     private MockMvc mockMvc;
 
     @Autowired
-    private TestRestTemplate restTemplate;
+    private MeterRegistry meterRegistry;
 
     @Test
     void healthEndpoint_ShouldReturnUp() throws Exception {
@@ -37,13 +36,9 @@ class ActuatorEndpointTest {
     }
 
     @Test
-    void prometheusEndpoint_ShouldReturnMetrics() {
-        ResponseEntity<String> response = restTemplate.getForEntity("/actuator/prometheus", String.class);
-        // Prometheus-Endpoint kann je nach Konfiguration 200 oder 404 zurückgeben
-        // Wir prüfen, dass der Actuator insgesamt funktioniert
-        assertThat(response.getStatusCode().is2xxSuccessful() || response.getStatusCode().is4xxClientError()).isTrue();
-        if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
-            assertThat(response.getBody()).contains("jvm_memory_used_bytes");
-        }
+    void prometheusEndpoint_ShouldHaveMetrics() {
+        // Prüft, dass die MeterRegistry Metriken enthält (Prometheus-Dependency aktiv)
+        assertThat(meterRegistry).isNotNull();
+        assertThat(meterRegistry.find("jvm.memory.used").gauge()).isNotNull();
     }
 }

@@ -22,6 +22,13 @@ public class MetricsConfig {
     private final AtomicLong errorCounter = new AtomicLong(0);
     private final AtomicLong heavyCounter = new AtomicLong(0);
 
+    // Prometheus Counter-Referenzen (einmalig registriert, wiederverwendet)
+    private Counter helloCounterProm;
+    private Counter slowCounterProm;
+    private Counter workCounterProm;
+    private Counter errorCounterProm;
+    private Counter heavyCounterProm;
+
     public MetricsConfig(MeterRegistry registry) {
         this.registry = registry;
     }
@@ -43,24 +50,24 @@ public class MetricsConfig {
                 .description("Benutzerdefinierter Timer für Operationen")
                 .register(registry);
 
-        // Separate Counter für jede URL
-        Counter.builder("app.hello.calls")
+        // Separate Counter für jede URL (einmalig registrieren und speichern)
+        helloCounterProm = Counter.builder("app.hello.calls")
                 .description("Anzahl der Aufrufe von /api/demo/hello")
                 .register(registry);
 
-        Counter.builder("app.slow.calls")
+        slowCounterProm = Counter.builder("app.slow.calls")
                 .description("Anzahl der Aufrufe von /api/demo/slow")
                 .register(registry);
 
-        Counter.builder("app.work.calls")
+        workCounterProm = Counter.builder("app.work.calls")
                 .description("Anzahl der Aufrufe von /api/demo/work")
                 .register(registry);
 
-        Counter.builder("app.error.calls")
+        errorCounterProm = Counter.builder("app.error.calls")
                 .description("Anzahl der Aufrufe von /api/demo/error")
                 .register(registry);
 
-        Counter.builder("app.heavy.calls")
+        heavyCounterProm = Counter.builder("app.heavy.calls")
                 .description("Anzahl der Aufrufe von /api/demo/heavy")
                 .register(registry);
 
@@ -94,45 +101,30 @@ public class MetricsConfig {
         return customCounter.get();
     }
 
-    // Separate Counter-Methoden für jede URL
+    // Separate Counter-Methoden für jede URL (nutzt gespeicherte Referenzen)
     public void incrementHelloCounter() {
         helloCounter.incrementAndGet();
-        Counter.builder("app.hello.calls")
-                .description("Anzahl der Aufrufe von /api/demo/hello")
-                .register(registry)
-                .increment();
+        helloCounterProm.increment();
     }
 
     public void incrementSlowCounter() {
         slowCounter.incrementAndGet();
-        Counter.builder("app.slow.calls")
-                .description("Anzahl der Aufrufe von /api/demo/slow")
-                .register(registry)
-                .increment();
+        slowCounterProm.increment();
     }
 
     public void incrementWorkCounter() {
         workCounter.incrementAndGet();
-        Counter.builder("app.work.calls")
-                .description("Anzahl der Aufrufe von /api/demo/work")
-                .register(registry)
-                .increment();
+        workCounterProm.increment();
     }
 
     public void incrementErrorCounter() {
         errorCounter.incrementAndGet();
-        Counter.builder("app.error.calls")
-                .description("Anzahl der Aufrufe von /api/demo/error")
-                .register(registry)
-                .increment();
+        errorCounterProm.increment();
     }
 
     public void incrementHeavyCounter() {
         heavyCounter.incrementAndGet();
-        Counter.builder("app.heavy.calls")
-                .description("Anzahl der Aufrufe von /api/demo/heavy")
-                .register(registry)
-                .increment();
+        heavyCounterProm.increment();
     }
 
     public long getHelloCounter() { return helloCounter.get(); }

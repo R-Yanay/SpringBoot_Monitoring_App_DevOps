@@ -7,7 +7,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @SpringBootTest
@@ -34,7 +33,7 @@ class DemoControllerTest {
 
     @Test
     void doWork_ShouldReturnResult() throws Exception {
-        mockMvc.perform(post("/api/demo/work"))
+        mockMvc.perform(get("/api/demo/work"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.message").value("Arbeit abgeschlossen"))
                 .andExpect(jsonPath("$.result").exists());
