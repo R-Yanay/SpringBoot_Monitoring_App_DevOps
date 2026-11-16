@@ -1,0 +1,35 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Code herunterladen
+        uses: actions/checkout@v4
+
+      - name: Java 17 installieren
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Tests ausführen mit Maven
+        run: mvn clean test
+
+      - name: JAR bauen (ohne Tests)
+        run: mvn package -DskipTests
+
+      - name: JAR als Artifact speichern
+        uses: actions/upload-artifact@v4
+        with:
+          name: monitoring-app.jar
+          path: target/*.jar
+          retention-days: 7
