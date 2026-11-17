@@ -130,6 +130,97 @@ graph LR
     metrics --> counter
 ```
 
+## Klassenstruktur
+
+Die drei Java-Klassen und ihre Beziehungen:
+
+```mermaid
+classDiagram
+    class MonitoringApplication {
+        +main(String[] args)
+    }
+
+    class DemoController {
+        -AtomicLong visitCounter
+        -MetricsConfig metricsConfig
+        -Logger log
+        +hello() Map~String, Object~
+        +slowEndpoint() Map~String, String~
+        +doWork() Map~String, String~
+        +errorEndpoint() Map~String, String~
+        +heavyLoad() Map~String, String~
+    }
+
+    class MetricsConfig {
+        -MeterRegistry registry
+        -AtomicLong helloCounter
+        -AtomicLong slowCounter
+        -AtomicLong workCounter
+        -AtomicLong errorCounter
+        -AtomicLong heavyCounter
+        -Counter helloCounterProm
+        -Counter slowCounterProm
+        -Counter workCounterProm
+        -Counter errorCounterProm
+        -Counter heavyCounterProm
+        -Timer slowTimer
+        +initCustomMetrics()
+        +incrementHelloCounter()
+        +incrementSlowCounter()
+        +incrementWorkCounter()
+        +incrementErrorCounter()
+        +incrementHeavyCounter()
+        +getSlowTimer() Timer
+        +getRegistry() MeterRegistry
+    }
+
+    class MeterRegistry {
+        <<external>>
+        +register(Meter)
+    }
+
+    class Counter {
+        <<external>>
+        +increment()
+    }
+
+    class Timer {
+        <<external>>
+        +record(Runnable)
+    }
+
+    class Logger {
+        <<external>>
+        +info(String, Object...)
+        +warn(String, Object...)
+    }
+
+    MonitoringApplication --> DemoController : Spring Boot startet
+    MonitoringApplication --> MetricsConfig : Spring Boot startet
+    DemoController --> MetricsConfig : injiziert
+    DemoController --> Logger : SLF4J
+    MetricsConfig --> MeterRegistry : injiziert
+    MetricsConfig --> Counter : registriert
+    MetricsConfig --> Timer : registriert
+```
+
+**Klassen im Detail:**
+
+| Klasse | Rolle | Wichtige Methoden |
+|--------|-------|-----------------|
+| `MonitoringApplication` | App-Start, Spring Boot Entry Point | `main()` |
+| `DemoController` | 5 REST-Endpunkte, Logging | `hello()`, `slowEndpoint()`, `doWork()`, `errorEndpoint()`, `heavyLoad()` |
+| `MetricsConfig` | 5 Counter, 5 Gauges, 1 Timer | `increment*Counter()`, `initCustomMetrics()` |
+
+**Externe Bibliotheken:**
+
+| Klasse | Bibliothek | Verwendung |
+|--------|-----------|-----------|
+| `MeterRegistry` | Micrometer | Metriken-Registry, zentraler Speicher |
+| `Counter` | Micrometer | Zählt Aufrufe hoch (z. B. `app.hello.calls`) |
+| `Timer` | Micrometer | Misst Dauer (z. B. `app.slow.duration`) |
+| `Logger` | SLF4J | Log-Nachrichten (INFO, WARN) |
+
 ## Projektstruktur
 
 ```
