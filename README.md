@@ -26,6 +26,7 @@ Datenfluss:
 
 ```
 App (8080) → Prometheus (9090) → Grafana (3000)
+App (Logs) → Promtail → Loki (3100) → Grafana (3000)
 ```
 
 ## Anfrage-Flow
@@ -150,7 +151,7 @@ cp .env.example .env
 
 ### Alle Services starten
 
-Ein Befehl startet App, Prometheus und Grafana:
+Ein Befehl startet App, Prometheus, Grafana, Loki und Promtail:
 
 ```bash
 docker compose up -d
@@ -226,12 +227,24 @@ mvn test
 
 Alle Alerts zeigen "Normal" (grün) bei fehlenden Daten (`noDataState: OK`).
 
+### Logging mit Grafana Loki
+
+Application-Logs werden zentral gesammelt und in Grafana angezeigt. Loki speichert die Logs, Promtail sammelt sie von den Docker-Containern.
+
+| Service | Port | Beschreibung |
+|---------|------|-------------|
+| Loki | 3100 | Log-Datenbank, speichert Logs von allen Containern |
+| Promtail | — | Liest Container-Logs und sendet sie an Loki |
+
+In Grafana: **Explore** → Datenquelle **Loki** wählen → Logs nach Container filtern.
+
 ### Lessons Learned
 
 Dieses Projekt dient als Einstieg in DevOps und deckt den vollständigen Lebenszyklus einer Anwendung ab:
 
 - **Containerisierung**: Eine Java-Anwendung mit Docker verpacken, mehrere Services in einem Netzwerk betreiben und Container-Kommunikation verstehen.
 - **Monitoring**: Prometheus als Datensammler und Grafana als Visualisierung einsetzen, PromQL-Abfragen schreiben und Dashboards per Provisioning automatisch laden.
+- **Logging**: Grafana Loki und Promtail für zentrale Log-Sammlung einrichten, Container-Logs in Grafana durchsuchen.
 - **Alerting**: Schwellenwerte definieren, Alert-Regeln konfigurieren und das Verhalten bei fehlenden Daten steuern.
 - **CI/CD**: Eine Pipeline mit GitHub Actions einrichten, die bei jedem Push automatisch Tests ausführt und Artefakte baut.
 - **Tests**: Unit- und Integration-Tests schreiben, um Controller-Endpunkte und Actuator-Metriken zu prüfen.
