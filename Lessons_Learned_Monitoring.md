@@ -131,3 +131,52 @@ Bei lokaler Entwicklung: App in der IDE neu starten.
 1. Docker Desktop starten
 2. `docker compose up -d` im Projektordner ausführen
 3. `http://localhost:3000` öffnen, Dashboard auswählen
+
+## YAML-Konfigurationsdateien im Überblick
+
+Das Projekt verwendet 8 YAML-Dateien. Jede definiert die Konfiguration für einen spezifischen Service oder eine bestimmte Funktion.
+
+### `docker-compose.yml` — Master-Plan für alle Container
+
+Definiert alle 5 Docker-Container und wie sie zusammenarbeiten: App, Prometheus, Grafana, Loki und Promtail. Enthält Volume-Mounts, Health-Checks, das gemeinsame Netzwerk und Logging-Labels.
+
+### `prometheus/prometheus.yml` — Metriken-Quellen
+
+Sagt Prometheus, welche Apps er alle 15 Sekunden abfragen soll. Enthält den Job-Namen, das Target (`app:8080`) und den Endpoint (`/actuator/prometheus`).
+
+### `loki-config.yml` — Log-Speicherung
+
+Konfiguriert Loki: Port 3100, Boltdb-Speicher auf der Festplatte, Retention (alte Logs automatisch löschen) und keine Authentifizierung.
+
+### `promtail-config.yml` — Log-Sammlung
+
+Sagt Promtail, welche Container-Logs gesammelt werden. Filtert nach dem Label `logging=true`, entdeckt neue Container alle 5 Sekunden und sendet die Logs an Loki.
+
+### `grafana/provisioning/datasources/prometheus.yml` — Prometheus als Datenquelle
+
+Registriert Prometheus automatisch als Datenquelle in Grafana. Ohne diese Datei müsste Prometheus manuell in der Grafana-Oberfläche hinzugefügt werden.
+
+### `grafana/provisioning/datasources/loki.yml` — Loki als Datenquelle
+
+Registriert Loki automatisch als Datenquelle in Grafana. Ermöglicht das Anzeigen von Logs unter **Explore** → **Loki**.
+
+### `grafana/provisioning/dashboards/monitoring.yml` — Dashboard automatisch laden
+
+Sagt Grafana, dass es die `monitoring.json` automatisch beim Start laden soll. Das Dashboard erscheint dann unter **Dashboards** → **Browse**.
+
+### `grafana/provisioning/alerting/rules.yml` — Alert-Regeln
+
+Definiert die 4 Alert-Regeln: CPU Warning (>80%), Memory Warning (>85% Heap), Error Rate Critical (>5% Fehler), App Down Critical (nicht erreichbar). Alle zeigen "Normal" bei fehlenden Daten (`noDataState: OK`).
+
+### Zusammenfassung
+
+| Datei | Service | Aufgabe |
+|-------|---------|---------|
+| `docker-compose.yml` | Alle | Container definieren, starten, vernetzen |
+| `prometheus/prometheus.yml` | Prometheus | Wo sind die Apps zum Scrapen? |
+| `loki-config.yml` | Loki | Wie Logs speichern? |
+| `promtail-config.yml` | Promtail | Welche Container-Logs sammeln? |
+| `grafana/.../datasources/prometheus.yml` | Grafana | Prometheus als Datenquelle registrieren |
+| `grafana/.../datasources/loki.yml` | Grafana | Loki als Datenquelle registrieren |
+| `grafana/.../dashboards/monitoring.yml` | Grafana | Dashboard automatisch laden |
+| `grafana/.../alerting/rules.yml` | Grafana | Alert-Regeln definieren |
