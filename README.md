@@ -1,14 +1,14 @@
 # Spring Boot Monitoring App
 
-Spring Boot-Anwendung mit Prometheus und Grafana zum Überwachen von CPU, Speicher und HTTP-Anfragen.
+Spring Boot-Anwendung mit vollständigem Observability-Stack: Prometheus für Metriken, Grafana für Visualisierung, Loki und Promtail für Logs. CI/CD mit GitHub Actions, 12 Tests, 4 Alert-Regeln.
 
 ## Architektur
 
-Alle 5 Services — Spring Boot App, Prometheus, Grafana, Loki und Promtail — laufen in Docker-Containern im selben Netzwerk (`monitoring`). Docker Desktop orchestriert die Container, vernetzt sie und stellt die Ports auf dem Host zur Verfügung.
+Alle 5 Services — Spring Boot App, Prometheus, Grafana, Loki und Promtail — laufen in Docker-Containern im selben Bridge-Netzwerk (`monitoring`). Docker Desktop verwaltet die Container, vernetzt sie und stellt die Ports auf dem Host zur Verfügung.
 
 ```mermaid
 graph TB
-    subgraph Host["Dein Computer (Host)"]
+    subgraph Host["Host"]
         subgraph Docker["Docker Desktop"]
             subgraph Network["monitoring (Bridge-Netzwerk)"]
                 App["Spring Boot App<br/>Port 8080<br/>/actuator/prometheus<br/>/api/demo/*"]
@@ -18,7 +18,7 @@ graph TB
                 Promtail["Promtail<br/>Log-Sender<br/>Docker-API"]
             end
         end
-        Browser["Browser<br/>localhost:8080<br/>localhost:3000<br/>localhost:9090"]
+        Browser["Browser<br/>localhost:8080, :3000, :9090, :3100"]
     end
 
     subgraph Volumes["Konfigurationsdateien (Volumes)"]
@@ -359,13 +359,13 @@ mvn test
 | CODE | Fertig |
 | BUILD | Fertig (GitHub Actions CI/CD) |
 | TEST | Fertig (12 Tests) |
-| DEPLOY | Fertig (alle 3 Services in Docker) |
+| DEPLOY | Fertig (alle 5 Services in Docker) |
 | OPERATE | Fertig (4 Alert-Regeln) |
 | MONITOR | Fertig (Prometheus + Grafana) |
 
 ### Alerting
 
-4 Alert-Regeln in `grafana/provisioning/alerting/rules.yml`:
+4 Alert-Regeln in `grafana/provisioning/alerting/rules.yml`, automatisch per Provisioning geladen:
 
 | Alert | Bedingung | Dauer |
 |-------|-----------|-------|

@@ -1,4 +1,4 @@
-# Lessons Learned: Monitoring mit Docker, Prometheus und Grafana
+# Lessons Learned: Monitoring und Logging mit Docker, Prometheus, Grafana und Loki
 
 ## Architektur: Prometheus und Grafana
 
@@ -25,46 +25,27 @@ Prometheus speichert die Daten, Grafana visualisiert sie. Beide benötigen einan
 
 ## Datenfluss
 
+**Metriken:**
 ```
-Spring Boot App (Port 8080)
-        |
-        |  /actuator/prometheus liefert Metriken
-        v
-+---------------------+
-|     Prometheus      |
-|   (Port 9090)       |
-|                     |
-|  - Scraping alle 15s|
-|  - Zeitreihenspeicher|
-|  - PromQL-Abfragen   |
-+----------+----------+
-           |
-           |  Speichert Daten für Grafana
-           v
-+---------------------+
-|      Grafana         |
-|   (Port 3000)        |
-|                      |
-|  - Dashboards        |
-|  - Alert-Status      |
-|  - Interaktive UI    |
-+----------+-----------+
-           |
-           |  Browser-Zugriff
-           v
-       Browser
+App (8080) → Prometheus (9090) → Grafana (3000)
 ```
-
 1. Spring Boot App stellt `/actuator/prometheus` bereit
 2. Prometheus fragt alle 15 Sekunden die Metriken ab und speichert sie
 3. Grafana liest auf Anfrage Daten von Prometheus und rendert das Dashboard
-4. Zugriff über `http://localhost:3000` im Browser
+
+**Logs:**
+```
+App, Prometheus, Grafana (stdout) → Promtail → Loki (3100) → Grafana (3000)
+```
+1. Container schreiben Logs auf `stdout`
+2. Promtail liest die Logs über die Docker-API und sendet sie an Loki
+3. Grafana Explore zeigt die Logs über LogQL-Abfragen
 
 ## Zwei Betriebsmodi
 
 ### Vollständiges Docker-Deploy (Empfohlen)
 
-Alle drei Services — App, Prometheus und Grafana — laufen in Docker-Containern im selben Netzwerk. Prometheus erreicht die App über den Container-Namen `app:8080`.
+Alle fünf Services — App, Prometheus, Grafana, Loki und Promtail — laufen in Docker-Containern im selben Netzwerk. Prometheus erreicht die App über den Container-Namen `app:8080`.
 
 ```bash
 docker compose up -d
@@ -136,6 +117,7 @@ Bei lokaler Entwicklung: App in der IDE neu starten.
 |---------|-----|-------|
 | Grafana | http://localhost:3000 | admin / admin |
 | Prometheus | http://localhost:9090 | kein Login |
+| Loki | http://localhost:3100 | kein Login |
 | Spring Boot App | http://localhost:8080 | kein Login |
 | Metriken | http://localhost:8080/actuator/prometheus | Rohdaten |
 

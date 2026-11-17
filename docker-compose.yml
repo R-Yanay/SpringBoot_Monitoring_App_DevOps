@@ -18,7 +18,7 @@ services:
       - monitoring
 
   prometheus:
-    image: prom/prometheus:2.47.0
+    image: prom/prometheus:v3.15.1
     ports:
       - "9090:9090"
     labels:
@@ -35,7 +35,7 @@ services:
       - monitoring
 
   grafana:
-    image: grafana/grafana:10.2.0
+    image: grafana/grafana:12.4
     ports:
       - "3000:3000"
     labels:
