@@ -236,16 +236,29 @@ Application-Logs werden zentral gesammelt und in Grafana angezeigt. Loki speiche
 | Loki | 3100 | Log-Datenbank, speichert Logs von allen Containern |
 | Promtail | — | Liest Container-Logs und sendet sie an Loki |
 
-In Grafana: **Explore** → Datenquelle **Loki** wählen → Logs nach Container filtern.
+**Was geloggt wird:**
 
-**Abfrage-Beispiele:**
+Jeder Endpunkt in `DemoController.java` loggt eine INFO-Nachricht (z. B. `GET /api/demo/hello - visits: 1`). Zusätzlich produzieren Prometheus (alle 15 Sekunden) und Docker Health-Checks (alle 30 Sekunden) Logs.
+
+**LogQL-Abfragen in Grafana Explore:**
 
 | Abfrage | Was wird angezeigt? |
 |---------|-------------------|
-| `{container="spring-boot-app"}` | Logs der Spring Boot App |
-| `{container="prometheus"}` | Logs von Prometheus |
-| `{container="grafana"}` | Logs von Grafana |
-| `{container="spring-boot-app"} \|= "error"` | Nur Logs mit "error" |
+| `{job="spring-boot-app"}` | Alle Logs der Spring Boot App |
+| `{job="spring-boot-app"} \|= "/api/demo"` | Nur Benutzer-Anfragen (ohne Monitoring-Noise) |
+| `{job="spring-boot-app"} \|= "/api/demo/hello"` | Nur `/hello` Anfragen |
+| `{job="spring-boot-app"} \|= "WARN"` | Nur Warnungen und Fehler |
+| `{job="spring-boot-app"} \|= "/api/demo/heavy"` | CPU/Memory-Last-Anfragen |
+| `{job="prometheus"}` | Prometheus-Logs |
+| `{job="grafana"}` | Grafana-Logs |
+
+**Praktische Anwendungsfälle:**
+
+- **Fehler suchen:** `{job="spring-boot-app"} \|= "error"` — zeigt alle Fehler-Logs
+- **Antwortzeit messen:** `{job="spring-boot-app"} \|= "/api/demo/slow"` — Start- und End-Zeit vergleichen
+- **Logs mit Metriken kombinieren:** CPU-Last im Dashboard prüfen, dann gleiche Zeitraum in Explore mit `{job="spring-boot-app"} \|= "/api/demo/heavy"` filtern
+
+**Hinweis:** In Grafana Explore den Zeitbereich auf "Last 1 hour" stellen, wenn keine frischen Logs erscheinen.
 
 ### Lessons Learned
 

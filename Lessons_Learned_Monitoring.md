@@ -18,6 +18,11 @@ Das Monitoring besteht aus zwei Komponenten mit klar getrennten Aufgaben:
 
 Prometheus speichert die Daten, Grafana visualisiert sie. Beide benötigen einander: Prometheus ohne Grafana bietet nur eine Textkonsole, Grafana ohne Prometheus hat keine Datenquelle.
 
+**Loki und Promtail** — Log-Sammlung
+- Loki speichert Container-Logs (ähnlich wie Prometheus Metriken)
+- Promtail liest die Logs von Docker-Containern und sendet sie an Loki
+- In Grafana Explore: Datenquelle **Loki** wählen → Logs durchsuchen
+
 ## Datenfluss
 
 ```
@@ -90,6 +95,14 @@ CPU und JVM Memory erscheinen sofort (Gauge-Werte). HTTP Request Rate und Respon
 ### 4. Volume-Mounts statt `docker cp`
 
 Die `docker-compose.yml` bindet Konfigurationsordner als Volumes ein. Änderungen an `monitoring.json` oder `rules.yml` werden nach einem `docker compose restart` automatisch übernommen — kein manuelles Kopieren in den Container nötig.
+
+### 5. Logging mit Loki
+
+Jeder Endpunkt in `DemoController.java` loggt eine INFO-Nachricht über `Logger`. Tomcat Access Logs werden nicht verwendet, da sie in Dateien statt auf `stdout` geschrieben werden und Promtail sie nicht sammeln kann. Die Log-Nachrichten enthalten Endpunkt, Parameter und Status (z. B. `GET /api/demo/hello - visits: 1`).
+
+### 6. LogQL-Abfragen
+
+In Grafana Explore: `{job="spring-boot-app"}` zeigt alle App-Logs. Mit `|="/api/demo"` nur Benutzer-Anfragen filtern. Den Zeitbereich auf "Last 1 hour" stellen, wenn keine frischen Logs erscheinen. Alte Logs mit `job = true` sind von der ersten Promtail-Konfiguration und verschwinden automatisch, wenn Loki sie löscht.
 
 ## Container aktualisieren nach Änderungen
 
