@@ -25,4 +25,4 @@ schema_config:
         period: 24h
 
 ruler:
-  alertmanager_url: http://localhost:9093
+  enable_api: true
