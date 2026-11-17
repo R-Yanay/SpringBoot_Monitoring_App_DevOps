@@ -238,6 +238,15 @@ Application-Logs werden zentral gesammelt und in Grafana angezeigt. Loki speiche
 
 In Grafana: **Explore** → Datenquelle **Loki** wählen → Logs nach Container filtern.
 
+**Abfrage-Beispiele:**
+
+| Abfrage | Was wird angezeigt? |
+|---------|-------------------|
+| `{container="spring-boot-app"}` | Logs der Spring Boot App |
+| `{container="prometheus"}` | Logs von Prometheus |
+| `{container="grafana"}` | Logs von Grafana |
+| `{container="spring-boot-app"} \|= "error"` | Nur Logs mit "error" |
+
 ### Lessons Learned
 
 Dieses Projekt dient als Einstieg in DevOps und deckt den vollständigen Lebenszyklus einer Anwendung ab:
