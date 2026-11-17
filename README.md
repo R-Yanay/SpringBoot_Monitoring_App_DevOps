@@ -4,30 +4,88 @@ Spring Boot-Anwendung mit Prometheus und Grafana zum Überwachen von CPU, Speich
 
 ## Architektur
 
-Alle drei Komponenten — Spring Boot App, Prometheus und Grafana — laufen in Docker-Containern im selben Netzwerk. Prometheus fragt alle 15 Sekunden `/actuator/prometheus` der App ab und speichert die Metriken. Grafana liest von Prometheus und visualisiert die Daten auf Port 3000.
+Alle 5 Services — Spring Boot App, Prometheus, Grafana, Loki und Promtail — laufen in Docker-Containern im selben Netzwerk (`monitoring`). Docker Desktop orchestriert die Container, vernetzt sie und stellt die Ports auf dem Host zur Verfügung.
 
-```
-+---------------------+     +---------------------+
-|  Spring Boot App    |     |  Docker Desktop     |
-|  Port 8080          |     |                     |
-|                     |     | +-----------+       |
-| /actuator/prometheus|---->| Prometheus  |       |
-|                     |     | Port 9090   |       |
-+---------------------+     |     |       |       |
-                            |     v       |       |
-                            | +-----------+       |
-                            | |  Grafana    |     |
-                            | | Port 3000   |     |
-                            | +-------------+     |
-                            +---------------------+
+```mermaid
+graph TB
+    subgraph Host["Dein Computer (Host)"]
+        subgraph Docker["Docker Desktop"]
+            subgraph Network["monitoring (Bridge-Netzwerk)"]
+                App["Spring Boot App<br/>Port 8080<br/>/actuator/prometheus<br/>/api/demo/*"]
+                Prometheus["Prometheus<br/>Port 9090<br/>Metriken-Datenbank"]
+                Grafana["Grafana<br/>Port 3000<br/>Dashboard & Explore"]
+                Loki["Loki<br/>Port 3100<br/>Log-Datenbank"]
+                Promtail["Promtail<br/>Log-Sender<br/>Docker-API"]
+            end
+        end
+        Browser["Browser<br/>localhost:8080<br/>localhost:3000<br/>localhost:9090"]
+    end
+
+    subgraph Volumes["Konfigurationsdateien (Volumes)"]
+        promYml["prometheus.yml"]
+        lokiCfg["loki-config.yml"]
+        promtailCfg["promtail-config.yml"]
+        dashJson["monitoring.json"]
+        rulesYml["alerting/rules.yml"]
+        lokiDs["datasources/loki.yml"]
+        promDs["datasources/prometheus.yml"]
+    end
+
+    %% Host → Docker Kommunikation
+    Browser -->|HTTP GET /api/demo/*| App
+    Browser -->|Dashboard & Explore| Grafana
+    Browser -->|PromQL Console| Prometheus
+
+    %% Metriken-Flow (Pull)
+    App -->|Scrape alle 15s<br/>/actuator/prometheus| Prometheus
+    Grafana -->|PromQL-Abfragen| Prometheus
+
+    %% Logs-Flow (Push)
+    App -->|stdout Logs| Promtail
+    Prometheus -->|stdout Logs| Promtail
+    Grafana -->|stdout Logs| Promtail
+    Promtail -->|Log-Streams<br/>HTTP Push| Loki
+    Grafana -->|LogQL-Abfragen| Loki
+
+    %% Docker-Infrastruktur
+    Promtail -.->|Docker Socket<br/>Container-Discovery| Docker
+
+    %% Volumes → Services
+    promYml -.->|Scrape-Targets| Prometheus
+    lokiCfg -.->|Speicher & Schema| Loki
+    promtailCfg -.->|Label-Filter| Promtail
+    dashJson -.->|Dashboard-Definition| Grafana
+    rulesYml -.->|Alert-Regeln| Grafana
+    lokiDs -.->|Loki als Datasource| Grafana
+    promDs -.->|Prometheus als Datasource| Grafana
+
+    %% Styling
+    classDef app fill:#4CAF50,stroke:#388E3C,color:#fff
+    classDef metrics fill:#2196F3,stroke:#1976D2,color:#fff
+    classDef logs fill:#FF9800,stroke:#F57C00,color:#fff
+    classDef visual fill:#9C27B0,stroke:#7B1FA2,color:#fff
+    classDef infra fill:#607D8B,stroke:#455A64,color:#fff
+    classDef config fill:#795548,stroke:#5D4037,color:#fff
+
+    class App app
+    class Prometheus metrics
+    class Loki,Promtail logs
+    class Grafana visual
+    class Docker,Network,Host infra
+    class promYml,lokiCfg,promtailCfg,dashJson,rulesYml,lokiDs,promDs config
 ```
 
-Datenfluss:
+**Datenflüsse im Überblick:**
 
-```
-App (8080) → Prometheus (9090) → Grafana (3000)
-App (Logs) → Promtail → Loki (3100) → Grafana (3000)
-```
+| Flow | Quelle | Ziel | Protokoll | Häufigkeit |
+|------|--------|------|-----------|-----------|
+| **Metriken (Pull)** | App `/actuator/prometheus` | Prometheus | HTTP | Alle 15 Sekunden |
+| **Metriken (Abfrage)** | Grafana | Prometheus | PromQL | Bei Dashboard-Update |
+| **Logs (Push)** | App, Prometheus, Grafana (stdout) | Promtail | Docker API | Echtzeit |
+| **Logs (Push)** | Promtail | Loki | HTTP Push | Echtzeit |
+| **Logs (Abfrage)** | Grafana | Loki | LogQL | Bei Explore-Abfrage |
+| **Benutzeranfragen** | Browser | App | HTTP GET | Manuell |
+| **Dashboard** | Browser | Grafana | HTTP | Manuell |
 
 ## Anfrage-Flow
 
